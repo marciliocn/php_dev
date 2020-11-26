@@ -1,0 +1,29 @@
+# A mais nova e recomendada versão do motor docker-compose
+version: '3'
+
+services:
+    # NÃO usar `latest` nas imagens pra evitar bugs de novas versões
+    # Webserver Nginx
+    nginx:
+        # nginx:<version>-alpine permite uma imagem final reduzida e usa a 
+        # biblioteca musl (pode dar problema se algum componente depender de glibc)
+        # Se surgir algum problema, mudar para nginx:<version>
+        image: nginx:1.19.5-alpine
+        ports:
+          - 8080:80
+        volumes:
+        # :ro = read only (indica que o container não deve modificar nada no diretório)
+          - ./src:/var/www/php:ro
+          - ./.docker/nginx/conf.d:/etc/nginx/conf.d:ro
+        depends_on:
+        # Ensures the PHP container will start before the Nginx one
+          - php
+
+    # PHP
+    php:
+        # image: php:7.4-fpm-alpine # usa imagem pronta
+        # build indica local onde buscar Dockerfile e reconstruir imagem customizada
+        build: ./.docker/php
+        working_dir: /var/www/php
+        volumes:
+          - ./src:/var/www/php
